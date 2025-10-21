@@ -265,6 +265,29 @@
             }
         }
 
+        // Add this debug function
+async function debugAuth() {
+    const userId = getUserId();
+    console.log('🔍 Debug Info:');
+    console.log('User ID:', userId);
+    console.log('Worker URL:', WORKER_URL);
+    console.log('URL being called:', `${WORKER_URL}/current?userId=${encodeURIComponent(userId)}`);
+    console.log('Spotify Connected in localStorage:', localStorage.getItem('spotify_connected'));
+    console.log('Pending Spotify User:', localStorage.getItem('pending_spotify_user'));
+    
+    // Test the worker directly
+    try {
+        const testResponse = await fetch(`${WORKER_URL}/health`);
+        const testData = await testResponse.json();
+        console.log('Worker health check:', testData);
+    } catch (err) {
+        console.error('Worker health check failed:', err);
+    }
+}
+
+// Call this in your DOMContentLoaded
+debugAuth();
+        
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             handleOAuthCallback(); // Handle callback if exists
