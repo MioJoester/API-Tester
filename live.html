@@ -212,58 +212,91 @@
         }
 
         // Handle OAuth callback
-        async function handleOAuthCallback() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const code = urlParams.get('code');
-            const state = urlParams.get('state');
-            const error = urlParams.get('error');
+        // In live.html - ENHANCED OAuth handler
+async function handleOAuthCallback() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    const error = urlParams.get('error');
 
-            if (error) {
-                showState('error', `Authorization failed: ${error}`);
-                return;
-            }
+    console.log('🔄 OAuth Callback Details:');
+    console.log('Code:', code ? '✓ Present' : '✗ Missing');
+    console.log('State:', state);
+    console.log('Error:', error);
+    console.log('Full URL:', window.location.href);
 
-            if (code) {
-                const userId = state || localStorage.getItem('pending_spotify_user');
-                
-                if (!userId) {
-                    showState('error', 'Invalid session');
-                    return;
-                }
+    if (error) {
+        console.error('OAuth Error:', error);
+        showState('error', `Spotify authorization failed: ${error}`);
+        return;
+    }
 
-                showState('loading', 'Connecting to Spotify...');
+    if (code) {
+        const userId = state || localStorage.getItem('pending_spotify_user');
+        
+        console.log('📦 Processing OAuth callback:');
+        console.log('User ID:', userId);
+        console.log('Code length:', code.length);
 
-                try {
-                    const response = await fetch(`${WORKER_URL}/callback`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            code, 
-                            userId,
-                            redirectUri: window.location.origin + '/live.html'
-                        })
-                    });
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        localStorage.setItem('spotify_connected', 'true');
-                        localStorage.setItem('spotify_user_id', userId);
-                        localStorage.removeItem('pending_spotify_user');
-                        
-                        // Clean URL
-                        window.history.replaceState({}, '', window.location.pathname);
-                        
-                        showState('loading', 'Loading your music...');
-                        setTimeout(fetchNowPlaying, 1000);
-                    } else {
-                        throw new Error(data.error);
-                    }
-                } catch (error) {
-                    showState('error', error.message);
-                }
-            }
+        if (!userId) {
+            console.error('No user ID found for OAuth callback');
+            showState('error', 'Session expired - please try connecting again');
+            return;
         }
+
+        showState('loading', 'Connecting to Spotify...');
+
+        try {
+            const callbackUrl = `${WORKER_URL}/callback`;
+            console.log('Calling worker callback:', callbackUrl);
+            
+            const response = await fetch(callbackUrl, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    code: code, 
+                    userId: userId,
+                    redirectUri: window.location.origin + '/live.html'
+                })
+            });
+
+            console.log('Callback response status:', response.status);
+            
+            const data = await response.json();
+            console.log('Callback response data:', data);
+
+            if (!response.ok) {
+                throw new Error(data.error || `HTTP ${response.status}`);
+            }
+
+            if (data.success) {
+                console.log('✅ OAuth successful!');
+                localStorage.setItem('spotify_connected', 'true');
+                localStorage.setItem('spotify_user_id', userId);
+                localStorage.removeItem('pending_spotify_user');
+                
+                // Clean URL - remove the code parameter
+                const cleanUrl = window.location.origin + window.location.pathname;
+                window.history.replaceState({}, '', cleanUrl);
+                console.log('URL cleaned, redirecting to:', cleanUrl);
+                
+                showState('loading', 'Loading your music...');
+                // Wait a moment then fetch
+                setTimeout(fetchNowPlaying, 1500);
+            } else {
+                throw new Error(data.error || 'OAuth failed');
+            }
+        } catch (error) {
+            console.error('❌ OAuth processing error:', error);
+            showState('error', `Connection failed: ${error.message}`);
+        }
+    } else {
+        console.log('ℹ️ No OAuth code in URL - checking existing connection');
+    }
+}
 
         // Add this debug function
 async function debugAuth() {
