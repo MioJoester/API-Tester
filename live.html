@@ -6,6 +6,36 @@
     <title>Your Spotify Activity - Neura</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        /* Smooth transitions */
+        .smooth-transition {
+            transition: all 0.3s ease-in-out;
+        }
+        
+        /* Hide elements without layout shift */
+        .hidden-smooth {
+            opacity: 0;
+            visibility: hidden;
+            position: absolute;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        
+        .visible-smooth {
+            opacity: 1;
+            visibility: visible;
+            position: relative;
+        }
+        
+        /* Loading animation */
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        .pulse-soft {
+            animation: pulse-soft 2s infinite;
+        }
+    </style>
 </head>
 <body class="bg-gray-900 min-h-screen text-white">
     <div class="max-w-2xl mx-auto p-4">
@@ -16,7 +46,7 @@
         </header>
 
         <!-- Player Card -->
-        <div id="player" class="bg-gray-800 rounded-2xl shadow-2xl p-6 border border-gray-700 transition-all duration-300">
+        <div id="player" class="bg-gray-800 rounded-2xl shadow-2xl p-6 border border-gray-700 smooth-transition">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
                 <div class="flex items-center space-x-3">
@@ -25,70 +55,68 @@
                     <span class="text-lg font-semibold" id="player-title">Your Spotify</span>
                 </div>
                 <div class="flex items-center space-x-2" id="status-indicator">
-                    <div class="w-3 h-3 bg-gray-500 rounded-full" id="status-dot"></div>
-                    <span class="text-sm font-medium text-gray-400" id="status-text">Checking...</span>
+                    <div class="w-3 h-3 bg-gray-500 rounded-full smooth-transition" id="status-dot"></div>
+                    <span class="text-sm font-medium text-gray-400 smooth-transition" id="status-text">Checking...</span>
                 </div>
             </div>
             
-            <!-- Content -->
-            <div class="flex items-center space-x-6">
-                <!-- Album Art -->
+            <!-- Content - All states exist but only one is visible -->
+            <div class="flex items-center space-x-6 min-h-[140px]">
+                <!-- Album Art (Always visible) -->
                 <div class="flex-shrink-0">
                     <img id="albumArt" src="https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg" 
-                         alt="Album Art" class="w-24 h-24 md:w-32 md:h-32 rounded-xl shadow-lg object-cover">
+                         alt="Album Art" class="w-24 h-24 md:w-32 md:h-32 rounded-xl shadow-lg object-cover smooth-transition">
                 </div>
                 
                 <!-- Track Info -->
                 <div class="flex-grow min-w-0">
-                    <div id="content-area">
-                        <!-- Not Connected State -->
-                        <div id="not-connected-state">
-                            <h2 class="text-2xl font-bold text-white mb-2">Not Connected</h2>
-                            <p class="text-gray-400 mb-4">Connect your Spotify account to see what you're listening to</p>
-                            <a href="index.html" class="inline-block bg-[#1DB954] hover:bg-[#1ed760] text-white font-semibold py-3 px-6 rounded-lg transition-colors">
-                                Connect Spotify
-                            </a>
-                        </div>
+                    <!-- Not Connected State -->
+                    <div id="not-connected-state" class="visible-smooth">
+                        <h2 class="text-2xl font-bold text-white mb-2">Not Connected</h2>
+                        <p class="text-gray-400 mb-4">Connect your Spotify account to see what you're listening to</p>
+                        <a href="index.html" class="inline-block bg-[#1DB954] hover:bg-[#1ed760] text-white font-semibold py-3 px-6 rounded-lg transition-colors transform hover:scale-105 active:scale-95">
+                            Connect Spotify
+                        </a>
+                    </div>
 
-                        <!-- Loading State -->
-                        <div id="loading-state" class="hidden">
-                            <div class="animate-pulse space-y-3">
-                                <div class="h-7 bg-gray-700 rounded w-3/4"></div>
-                                <div class="h-5 bg-gray-700 rounded w-1/2"></div>
-                                <div class="pt-2">
-                                    <div class="h-2 bg-gray-700 rounded"></div>
-                                </div>
+                    <!-- Loading State -->
+                    <div id="loading-state" class="hidden-smooth">
+                        <div class="space-y-3">
+                            <div class="h-7 bg-gray-700 rounded w-3/4 pulse-soft"></div>
+                            <div class="h-5 bg-gray-700 rounded w-1/2 pulse-soft"></div>
+                            <div class="pt-2">
+                                <div class="h-2 bg-gray-700 rounded pulse-soft"></div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Playing State -->
-                        <div id="playing-state" class="hidden">
-                            <h2 id="songName" class="text-2xl font-bold text-white truncate mb-1">Song Name</h2>
-                            <p id="artistName" class="text-lg text-gray-300 truncate mb-4">Artist Name</p>
-                            
-                            <!-- Progress -->
-                            <div class="space-y-2">
-                                <div class="flex justify-between text-sm text-gray-400">
-                                    <span id="currentTime">0:00</span>
-                                    <span id="totalTime">0:00</span>
-                                </div>
-                                <div class="w-full bg-gray-700 rounded-full h-2">
-                                    <div id="progressBar" class="bg-[#1DB954] h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
-                                </div>
+                    <!-- Playing State -->
+                    <div id="playing-state" class="hidden-smooth">
+                        <h2 id="songName" class="text-2xl font-bold text-white truncate mb-1 smooth-transition">Song Name</h2>
+                        <p id="artistName" class="text-lg text-gray-300 truncate mb-4 smooth-transition">Artist Name</p>
+                        
+                        <!-- Progress -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-sm text-gray-400">
+                                <span id="currentTime" class="smooth-transition">0:00</span>
+                                <span id="totalTime" class="smooth-transition">0:00</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div id="progressBar" class="bg-[#1DB954] h-2 rounded-full smooth-transition" style="width: 0%"></div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Error State -->
-                        <div id="error-state" class="hidden">
-                            <h2 class="text-2xl font-bold text-white mb-2">Connection Issue</h2>
-                            <p id="error-message" class="text-gray-400 mb-4">There was a problem loading your Spotify data</p>
-                            <button onclick="fetchNowPlaying()" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors mr-3">
-                                <i class="fas fa-redo mr-2"></i>Retry
-                            </button>
-                            <a href="index.html" class="inline-block bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
-                                Reconnect
-                            </a>
-                        </div>
+                    <!-- Error State -->
+                    <div id="error-state" class="hidden-smooth">
+                        <h2 class="text-2xl font-bold text-white mb-2">Connection Issue</h2>
+                        <p id="error-message" class="text-gray-400 mb-4">There was a problem loading your Spotify data</p>
+                        <button onclick="fetchNowPlaying()" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors mr-3 transform hover:scale-105 active:scale-95">
+                            <i class="fas fa-redo mr-2"></i>Retry
+                        </button>
+                        <a href="index.html" class="inline-block bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors transform hover:scale-105 active:scale-95">
+                            Reconnect
+                        </a>
                     </div>
                 </div>
             </div>
@@ -106,35 +134,47 @@
         // Configuration - UPDATE THIS!
         const WORKER_URL = 'https://spotify-tester.mthaker630.workers.dev'; // ← Your Worker URL
 
-        // Show specific state
+        // Show specific state with smooth transitions
         function showState(state, message = '') {
             const states = ['not-connected', 'loading', 'playing', 'error'];
-            states.forEach(s => document.getElementById(s + '-state').classList.add('hidden'));
             
-            document.getElementById(state + '-state').classList.remove('hidden');
+            // Hide all states first
+            states.forEach(s => {
+                const element = document.getElementById(s + '-state');
+                element.classList.remove('visible-smooth');
+                element.classList.add('hidden-smooth');
+            });
             
+            // Show current state after a tiny delay for smooth transition
+            setTimeout(() => {
+                const currentElement = document.getElementById(state + '-state');
+                currentElement.classList.remove('hidden-smooth');
+                currentElement.classList.add('visible-smooth');
+            }, 50);
+            
+            // Update status indicator
             const statusDot = document.getElementById('status-dot');
             const statusText = document.getElementById('status-text');
             const playerTitle = document.getElementById('player-title');
             
             switch(state) {
                 case 'not-connected':
-                    statusDot.className = 'w-3 h-3 bg-gray-500 rounded-full';
+                    statusDot.className = 'w-3 h-3 bg-gray-500 rounded-full smooth-transition';
                     statusText.textContent = 'Not Connected';
                     playerTitle.textContent = 'Your Spotify';
                     break;
                 case 'loading':
-                    statusDot.className = 'w-3 h-3 bg-yellow-500 rounded-full animate-pulse';
+                    statusDot.className = 'w-3 h-3 bg-yellow-500 rounded-full smooth-transition pulse-soft';
                     statusText.textContent = 'Loading...';
                     playerTitle.textContent = 'Your Spotify';
                     break;
                 case 'playing':
-                    statusDot.className = 'w-3 h-3 bg-green-500 rounded-full animate-pulse';
+                    statusDot.className = 'w-3 h-3 bg-green-500 rounded-full smooth-transition';
                     statusText.textContent = 'Live';
                     playerTitle.textContent = 'Now Playing';
                     break;
                 case 'error':
-                    statusDot.className = 'w-3 h-3 bg-red-500 rounded-full';
+                    statusDot.className = 'w-3 h-3 bg-red-500 rounded-full smooth-transition';
                     statusText.textContent = 'Error';
                     playerTitle.textContent = 'Your Spotify';
                     if (message) {
@@ -243,17 +283,21 @@
                 
                 if (data.is_playing && data.item) {
                     const track = data.item;
-                    document.getElementById('songName').textContent = track.name;
-                    document.getElementById('artistName').textContent = track.artists.map(a => a.name).join(", ");
-                    document.getElementById('albumArt').src = track.album.images[0]?.url || "https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg";
                     
-                    const progressMs = data.progress_ms || 0;
-                    const durationMs = track.duration_ms;
-                    const progressPercent = (progressMs / durationMs) * 100;
-                    
-                    document.getElementById('progressBar').style.width = `${progressPercent}%`;
-                    document.getElementById('currentTime').textContent = formatTime(progressMs);
-                    document.getElementById('totalTime').textContent = formatTime(durationMs);
+                    // Smooth content updates
+                    setTimeout(() => {
+                        document.getElementById('songName').textContent = track.name;
+                        document.getElementById('artistName').textContent = track.artists.map(a => a.name).join(", ");
+                        document.getElementById('albumArt').src = track.album.images[0]?.url || "https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg";
+                        
+                        const progressMs = data.progress_ms || 0;
+                        const durationMs = track.duration_ms;
+                        const progressPercent = (progressMs / durationMs) * 100;
+                        
+                        document.getElementById('progressBar').style.width = `${progressPercent}%`;
+                        document.getElementById('currentTime').textContent = formatTime(progressMs);
+                        document.getElementById('totalTime').textContent = formatTime(durationMs);
+                    }, 100);
                     
                     showState('playing');
                 }
@@ -298,21 +342,26 @@
             }
         }
 
-        // Initialize
+        // Initialize - Set initial state immediately
         document.addEventListener('DOMContentLoaded', function() {
-            handleOAuthCallback(); // Handle callback if exists
-            
-            // If no callback, check existing connection
+            // Set initial state without delay
+            const isConnected = localStorage.getItem('spotify_connected') === 'true';
             const urlParams = new URLSearchParams(window.location.search);
-            if (!urlParams.get('code')) {
-                const isConnected = localStorage.getItem('spotify_connected') === 'true';
-                if (isConnected) {
-                    fetchNowPlaying();
-                    // Auto-refresh every 5 seconds
-                    setInterval(fetchNowPlaying, 5000);
-                } else {
-                    showState('not-connected');
-                }
+            const hasCode = urlParams.get('code');
+            
+            if (hasCode) {
+                // We have an OAuth code, handle it
+                handleOAuthCallback();
+            } else if (isConnected) {
+                // Already connected, start fetching
+                showState('loading');
+                setTimeout(fetchNowPlaying, 100);
+                
+                // Auto-refresh every 5 seconds
+                setInterval(fetchNowPlaying, 5000);
+            } else {
+                // Not connected
+                showState('not-connected');
             }
         });
     </script>
