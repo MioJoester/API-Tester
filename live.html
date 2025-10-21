@@ -7,45 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        /* Smooth transitions */
-        .smooth-transition {
-            transition: all 0.3s ease-in-out;
-        }
-        
-        /* Hide elements without layout shift */
-        .hidden-smooth {
-            opacity: 0;
-            visibility: hidden;
-            position: absolute;
-            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-        }
-        
-        .visible-smooth {
-            opacity: 1;
-            visibility: visible;
-            position: relative;
-        }
-        
-        /* Loading animation */
-        @keyframes pulse-soft {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
-        }
-        
-        .pulse-soft {
-            animation: pulse-soft 2s infinite;
-        }
-        
-        /* Profile picture styling */
-        .profile-pic {
-            border: 2px solid #1DB954;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-        }
+        .smooth-transition { transition: all 0.3s ease-in-out; }
+        .hidden-smooth { opacity: 0; visibility: hidden; position: absolute; transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out; }
+        .visible-smooth { opacity: 1; visibility: visible; position: relative; }
+        @keyframes pulse-soft { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+        .pulse-soft { animation: pulse-soft 2s infinite; }
+        .profile-pic { border: 2px solid #1DB954; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); }
     </style>
 </head>
 <body class="bg-gray-900 min-h-screen text-white">
     <div class="max-w-2xl mx-auto p-4">
-        <!-- Header -->
         <header class="text-center mb-8 pt-8">
             <h1 class="text-4xl font-bold mb-2">Your Spotify Activity</h1>
             <p class="text-gray-400">Live from your Spotify account</p>
@@ -69,7 +40,6 @@
 
         <!-- Player Card -->
         <div id="player" class="bg-gray-800 rounded-2xl shadow-2xl p-6 border border-gray-700 smooth-transition">
-            <!-- Header -->
             <div class="flex items-center justify-between mb-6">
                 <div class="flex items-center space-x-3">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Spotify_logo_without_text.svg/1024px-Spotify_logo_without_text.svg.png" 
@@ -82,17 +52,13 @@
                 </div>
             </div>
             
-            <!-- Content - All states exist but only one is visible -->
             <div class="flex items-center space-x-6 min-h-[140px]">
-                <!-- Album Art (Always visible) -->
                 <div class="flex-shrink-0">
                     <img id="albumArt" src="https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg" 
                          alt="Album Art" class="w-24 h-24 md:w-32 md:h-32 rounded-xl shadow-lg object-cover smooth-transition">
                 </div>
                 
-                <!-- Track Info -->
                 <div class="flex-grow min-w-0">
-                    <!-- Not Connected State -->
                     <div id="not-connected-state" class="visible-smooth">
                         <h2 class="text-2xl font-bold text-white mb-2">Not Connected</h2>
                         <p class="text-gray-400 mb-4">Connect your Spotify account to see what you're listening to</p>
@@ -101,7 +67,6 @@
                         </a>
                     </div>
 
-                    <!-- Loading State -->
                     <div id="loading-state" class="hidden-smooth">
                         <div class="space-y-3">
                             <div class="h-7 bg-gray-700 rounded w-3/4 pulse-soft"></div>
@@ -112,12 +77,9 @@
                         </div>
                     </div>
 
-                    <!-- Playing State -->
                     <div id="playing-state" class="hidden-smooth">
                         <h2 id="songName" class="text-2xl font-bold text-white truncate mb-1 smooth-transition">Song Name</h2>
                         <p id="artistName" class="text-lg text-gray-300 truncate mb-4 smooth-transition">Artist Name</p>
-                        
-                        <!-- Progress -->
                         <div class="space-y-2">
                             <div class="flex justify-between text-sm text-gray-400">
                                 <span id="currentTime" class="smooth-transition">0:00</span>
@@ -129,7 +91,6 @@
                         </div>
                     </div>
 
-                    <!-- Error State -->
                     <div id="error-state" class="hidden-smooth">
                         <h2 class="text-2xl font-bold text-white mb-2">Connection Issue</h2>
                         <p id="error-message" class="text-gray-400 mb-4">There was a problem loading your Spotify data</p>
@@ -144,37 +105,44 @@
             </div>
         </div>
 
-        <!-- Info Section -->
+        <!-- Debug Info (Remove in production) -->
+        <div id="debug-info" class="mt-4 p-4 bg-gray-800 rounded-lg text-xs text-gray-400 hidden">
+            <h3 class="font-bold mb-2">Debug Info:</h3>
+            <div id="debug-content"></div>
+        </div>
+
         <div class="mt-8 text-center text-gray-500 text-sm">
             <p>🎵 Each user sees their own Spotify activity</p>
             <p class="mt-1">🔄 Auto-refreshes every 5 seconds</p>
-            <p class="mt-1">🔐 Secure token handling</p>
+            <p class="mt-1">📱 Mobile compatible</p>
         </div>
     </div>
 
     <script>
-        // Configuration - UPDATE THIS!
         const WORKER_URL = 'https://spotify-tester.mthaker630.workers.dev'; // ← Your Worker URL
+        
+        // Debug logging
+        function debugLog(message, data = null) {
+            console.log('🔧 ' + message, data);
+            // Uncomment to show debug info on page
+            // document.getElementById('debug-content').innerHTML += `<div>${message} ${data ? JSON.stringify(data) : ''}</div>`;
+            // document.getElementById('debug-info').classList.remove('hidden');
+        }
 
-        // Show specific state with smooth transitions
         function showState(state, message = '') {
             const states = ['not-connected', 'loading', 'playing', 'error'];
-            
-            // Hide all states first
             states.forEach(s => {
                 const element = document.getElementById(s + '-state');
                 element.classList.remove('visible-smooth');
                 element.classList.add('hidden-smooth');
             });
             
-            // Show current state after a tiny delay for smooth transition
             setTimeout(() => {
                 const currentElement = document.getElementById(state + '-state');
                 currentElement.classList.remove('hidden-smooth');
                 currentElement.classList.add('visible-smooth');
             }, 50);
             
-            // Update status indicator
             const statusDot = document.getElementById('status-dot');
             const statusText = document.getElementById('status-text');
             const playerTitle = document.getElementById('player-title');
@@ -201,14 +169,11 @@
                     statusDot.className = 'w-3 h-3 bg-red-500 rounded-full smooth-transition';
                     statusText.textContent = 'Error';
                     playerTitle.textContent = 'Your Spotify';
-                    if (message) {
-                        document.getElementById('error-message').textContent = message;
-                    }
+                    if (message) document.getElementById('error-message').textContent = message;
                     break;
             }
         }
 
-        // Format time
         function formatTime(ms) {
             const totalSeconds = Math.floor(ms / 1000);
             const minutes = Math.floor(totalSeconds / 60);
@@ -216,82 +181,94 @@
             return `${minutes}:${seconds.toString().padStart(2, "0")}`;
         }
 
-        // Fetch user profile from Spotify
         async function fetchUserProfile(accessToken) {
             try {
                 const response = await fetch(`${WORKER_URL}/api?endpoint=me&token=${accessToken}`);
                 const data = await response.json();
+                debugLog('User profile response:', data);
                 
                 if (data.id) {
-                    // Update user profile section
                     document.getElementById('user-avatar').src = data.images?.[0]?.url || 'https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg';
                     document.getElementById('user-name').textContent = data.display_name || 'Spotify User';
                     document.getElementById('user-email').textContent = data.email || `ID: ${data.id}`;
                     
-                    // Store user info for later use
                     localStorage.setItem('spotify_user_name', data.display_name || 'Spotify User');
                     localStorage.setItem('spotify_user_avatar', data.images?.[0]?.url || '');
                     localStorage.setItem('spotify_user_id', data.id);
-                    
-                    return data;
                 }
             } catch (error) {
-                console.error('Error fetching user profile:', error);
-                // Use fallback data
-                document.getElementById('user-name').textContent = 'Spotify User';
-                document.getElementById('user-email').textContent = 'Connected to Spotify';
+                debugLog('Error fetching user profile:', error);
             }
         }
 
-        // Exchange code for token using Worker
+        // NEW: Try multiple endpoints to get playback state
+        async function tryMultipleEndpoints(accessToken) {
+            const endpoints = [
+                'me/player/currently-playing',
+                'me/player',  // Fallback to general player state
+            ];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    debugLog(`Trying endpoint: ${endpoint}`);
+                    const response = await fetch(`${WORKER_URL}/api?endpoint=${endpoint}&token=${accessToken}`);
+                    
+                    if (response.status === 200) {
+                        const data = await response.json();
+                        debugLog(`Endpoint ${endpoint} success:`, data);
+                        return data;
+                    } else if (response.status === 204) {
+                        debugLog(`Endpoint ${endpoint}: No content (204)`);
+                        return { is_playing: false, endpoint: endpoint };
+                    } else {
+                        debugLog(`Endpoint ${endpoint} failed: ${response.status}`);
+                    }
+                } catch (error) {
+                    debugLog(`Endpoint ${endpoint} error:`, error);
+                }
+            }
+            
+            return null;
+        }
+
         async function exchangeCodeForToken(code) {
             showState('loading', 'Connecting to Spotify...');
             
             try {
                 const response = await fetch(WORKER_URL + '/token', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        code: code,
-                        redirect_uri: window.location.origin + '/live.html'
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, redirect_uri: window.location.origin + '/live.html' })
                 });
 
                 const data = await response.json();
+                debugLog('Token exchange response:', data);
                 
                 if (data.access_token) {
-                    // Store tokens in localStorage
                     localStorage.setItem('spotify_access_token', data.access_token);
                     localStorage.setItem('spotify_refresh_token', data.refresh_token);
                     localStorage.setItem('spotify_token_expiry', Date.now() + (data.expires_in * 1000));
                     localStorage.setItem('spotify_connected', 'true');
                     
-                    // Fetch user profile after getting token
                     await fetchUserProfile(data.access_token);
-                    
                     return data;
                 } else {
                     throw new Error(data.error_description || 'Failed to get token');
                 }
             } catch (error) {
-                console.error('Token exchange error:', error);
+                debugLog('Token exchange error:', error);
                 throw error;
             }
         }
 
-        // Check if token is expired
         function isTokenExpired() {
             const tokenExpiry = localStorage.getItem('spotify_token_expiry');
             return tokenExpiry && Date.now() > parseInt(tokenExpiry);
         }
 
-        // Fetch currently playing track
         async function fetchNowPlaying() {
             const accessToken = localStorage.getItem('spotify_access_token');
             
-            // Check if token expired
             if (!accessToken || isTokenExpired()) {
                 localStorage.removeItem('spotify_access_token');
                 localStorage.removeItem('spotify_connected');
@@ -302,20 +279,23 @@
             showState('loading', 'Loading your music...');
 
             try {
-                const response = await fetch(`${WORKER_URL}/api?endpoint=me/player/currently-playing&token=${accessToken}`);
-                
-                const data = await response.json();
-                
-                if (response.status === 401) {
-                    // Token expired
-                    localStorage.removeItem('spotify_access_token');
-                    localStorage.removeItem('spotify_connected');
-                    showState('not-connected');
-                    return;
+                // Try multiple endpoints to get playback state
+                const data = await tryMultipleEndpoints(accessToken);
+                debugLog('Final playback data:', data);
+
+                if (!data) {
+                    throw new Error('Could not fetch playback state from any endpoint');
                 }
 
-                if (response.status === 204 || (data && !data.is_playing)) {
-                    // No music playing
+                if (data.error) {
+                    throw new Error(data.error.message || 'Spotify API error');
+                }
+
+                // Handle different response formats
+                const isPlaying = data.is_playing;
+                const track = data.item || (data.context && data.context.type === 'track' ? data : null);
+
+                if (!isPlaying || !track) {
                     document.getElementById('songName').textContent = "No music playing";
                     document.getElementById('artistName').textContent = "Play something on Spotify to see it here!";
                     document.getElementById('albumArt').src = "https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg";
@@ -326,108 +306,81 @@
                     return;
                 }
 
-                if (!response.ok) {
-                    throw new Error(data.error?.message || `Spotify API error: ${response.status}`);
-                }
-
-                if (data.is_playing && data.item) {
-                    const track = data.item;
+                // Update UI with track data
+                setTimeout(() => {
+                    document.getElementById('songName').textContent = track.name || 'Unknown Track';
+                    document.getElementById('artistName').textContent = track.artists ? track.artists.map(a => a.name).join(", ") : 'Unknown Artist';
+                    document.getElementById('albumArt').src = track.album?.images?.[0]?.url || "https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg";
                     
-                    // Smooth content updates
-                    setTimeout(() => {
-                        document.getElementById('songName').textContent = track.name;
-                        document.getElementById('artistName').textContent = track.artists.map(a => a.name).join(", ");
-                        document.getElementById('albumArt').src = track.album.images[0]?.url || "https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg";
-                        
-                        const progressMs = data.progress_ms || 0;
-                        const durationMs = track.duration_ms;
-                        const progressPercent = (progressMs / durationMs) * 100;
-                        
-                        document.getElementById('progressBar').style.width = `${progressPercent}%`;
-                        document.getElementById('currentTime').textContent = formatTime(progressMs);
-                        document.getElementById('totalTime').textContent = formatTime(durationMs);
-                    }, 100);
+                    const progressMs = data.progress_ms || 0;
+                    const durationMs = track.duration_ms || 0;
+                    const progressPercent = durationMs > 0 ? (progressMs / durationMs) * 100 : 0;
                     
-                    showState('playing');
-                }
+                    document.getElementById('progressBar').style.width = `${progressPercent}%`;
+                    document.getElementById('currentTime').textContent = formatTime(progressMs);
+                    document.getElementById('totalTime').textContent = formatTime(durationMs);
+                }, 100);
+                
+                showState('playing');
                 
             } catch (error) {
-                console.error('Error:', error);
+                debugLog('Fetch error:', error);
                 showState('error', error.message);
             }
         }
 
-        // Handle OAuth callback
         async function handleOAuthCallback() {
             const urlParams = new URLSearchParams(window.location.search);
             const code = urlParams.get('code');
             const error = urlParams.get('error');
 
             if (error) {
-                console.error('OAuth Error:', error);
+                debugLog('OAuth Error:', error);
                 showState('error', `Spotify authorization failed: ${error}`);
                 return;
             }
 
             if (code) {
                 try {
-                    console.log('Exchanging code for token...');
+                    debugLog('Processing OAuth callback with code');
                     const tokenData = await exchangeCodeForToken(code);
                     
                     if (tokenData.access_token) {
-                        console.log('✅ OAuth successful!');
-                        
-                        // Clean URL - remove the code parameter
+                        debugLog('OAuth successful');
                         const cleanUrl = window.location.origin + window.location.pathname;
                         window.history.replaceState({}, '', cleanUrl);
-                        
                         showState('loading', 'Loading your music...');
                         setTimeout(fetchNowPlaying, 1000);
                     }
                 } catch (error) {
-                    console.error('❌ OAuth processing error:', error);
+                    debugLog('OAuth processing error:', error);
                     showState('error', `Connection failed: ${error.message}`);
                 }
             }
         }
 
-        // Load stored user profile
         function loadStoredUserProfile() {
             const userName = localStorage.getItem('spotify_user_name');
             const userAvatar = localStorage.getItem('spotify_user_avatar');
-            
-            if (userName) {
-                document.getElementById('user-name').textContent = userName;
-                document.getElementById('user-email').textContent = 'Connected to Spotify';
-            }
-            
-            if (userAvatar) {
-                document.getElementById('user-avatar').src = userAvatar;
-            }
+            if (userName) document.getElementById('user-name').textContent = userName;
+            if (userAvatar) document.getElementById('user-avatar').src = userAvatar;
         }
 
-        // Initialize - Set initial state immediately
+        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            // Load any stored user profile data
             loadStoredUserProfile();
             
-            // Set initial state without delay
             const isConnected = localStorage.getItem('spotify_connected') === 'true';
             const urlParams = new URLSearchParams(window.location.search);
             const hasCode = urlParams.get('code');
             
             if (hasCode) {
-                // We have an OAuth code, handle it
                 handleOAuthCallback();
             } else if (isConnected) {
-                // Already connected, start fetching
                 showState('loading');
                 setTimeout(fetchNowPlaying, 100);
-                
-                // Auto-refresh every 5 seconds
                 setInterval(fetchNowPlaying, 5000);
             } else {
-                // Not connected
                 showState('not-connected');
             }
         });
