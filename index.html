@@ -57,27 +57,33 @@
         }
 
         // Connect to Spotify
-        function connectSpotify() {
-            const clientId = '8b031ecab1c74257acc460790cfd7c63'; // ← Replace with your new app ID
-            const redirectUri = window.location.origin + '/live.html'; // Dynamic redirect
-            const scope = 'user-read-currently-playing user-read-playback-state';
-            const userId = getUserId();
-            
-            // Store user ID for after redirect
-            localStorage.setItem('pending_spotify_user', userId);
-            
-            const authUrl = `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${userId}`;
-            
-            // Show loading state
-            document.getElementById('connect-btn').disabled = true;
-            document.getElementById('connect-btn').textContent = 'Redirecting to Spotify...';
-            document.getElementById('status').classList.remove('hidden');
-            
-            setTimeout(() => {
-                window.location.href = authUrl;
-            }, 1000);
-        }
-
+        // In index.html - UPDATED connect function
+function connectSpotify() {
+    const clientId = '8b031ecab1c74257acc460790cfd7c63'; // ← MAKE SURE THIS IS SET!
+    const redirectUri = window.location.origin + '/live.html';
+    const scope = 'user-read-currently-playing user-read-playback-state';
+    const userId = getUserId();
+    
+    console.log('🚀 Starting OAuth flow:');
+    console.log('Client ID:', clientId);
+    console.log('Redirect URI:', redirectUri);
+    console.log('User ID:', userId);
+    
+    // Store user ID for after redirect
+    localStorage.setItem('pending_spotify_user', userId);
+    
+    const authUrl = `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${userId}`;
+    
+    console.log('Spotify Auth URL:', authUrl);
+    
+    // Show loading state
+    document.getElementById('connect-btn').disabled = true;
+    document.getElementById('connect-btn').textContent = 'Redirecting to Spotify...';
+    document.getElementById('status').classList.remove('hidden');
+    
+    // Redirect to Spotify
+    window.location.href = authUrl;
+}
         // Check if already connected
         document.addEventListener('DOMContentLoaded', function() {
             const isConnected = localStorage.getItem('spotify_connected') === 'true';
